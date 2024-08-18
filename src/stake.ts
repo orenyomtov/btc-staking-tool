@@ -10,6 +10,7 @@ export const stake = async ({
   validatorAddress,
   rewardAddress,
   privateKey,
+  fireblocksVaultId,
   publicKey,
   coreNetwork = "mainnet",
   bitcoinNetwork = "mainnet",
@@ -28,8 +29,8 @@ export const stake = async ({
     throw new Error("Account should not be empty");
   }
 
-  if (!privateKey) {
-    throw new Error("privateKey should not be empty");
+  if (!(Number(privateKey == undefined) ^ Number(fireblocksVaultId == undefined))) {
+    throw new Error("Must provide either privateKey or fireblocksVaultId");
   }
 
   if (!amount) {
@@ -54,6 +55,7 @@ export const stake = async ({
     type: RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
     publicKey,
     privateKey,
+    fireblocksVaultId,
     bitcoinNetwork,
     coreNetwork,
     bitcoinRpc,

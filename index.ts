@@ -19,9 +19,13 @@ program
     "-acc, --account <account>",
     "The Bitcon address used to stake."
   )
-  .requiredOption(
+  .option(
     "-privkey, --privatekey <privatekey>",
     "The private key used to sign the transaction, which should be associated with --account. Hex format."
+  )
+  .option(
+    "-fbv, --fireblocksvaultid <fireblocksVaultId>",
+    "The Fireblocks vault ID to use for signing the transaction, as an alternative to providing a private key."
   )
   .requiredOption(
     "-amt, --amount <amount>",
@@ -42,7 +46,7 @@ program
   )
   .option(
     "-pubkey, --publickey <publickey>",
-    "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey."
+    "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey or --fireblocksvaultid."
   )
   .requiredOption(
     "-raddr, --rewardaddress <rewardaddress>",
@@ -76,6 +80,7 @@ program
       bitcoinNetwork: bitcoinnetwork,
       coreNetwork: corenetwork,
       privateKey: args.privatekey,
+      fireblocksVaultId: args.fireblocksvaultid,
       witness: args.witness,
       bitcoinRpc: args.bitcoinrpc,
       fee: fee || args.fee,
@@ -93,9 +98,13 @@ program
     "-r, --redeemscript <redeemscript>",
     "The redeem script which was returned in the stake action."
   )
-  .requiredOption(
+  .option(
     "-privkey, --privatekey <privatekey>",
-    "The private key associated --publickey in the stake action. Hex format."
+    "The private key used to sign the transaction, which should be associated with --account. Hex format."
+  )
+  .option(
+    "-fbv, --fireblocksvaultid <fireblocksVaultId>",
+    "The Fireblocks vault ID to use for signing the transaction, as an alternative to providing a private key."
   )
   .requiredOption(
     "-d, --destaddress <destaddress>",
@@ -116,6 +125,7 @@ program
       account: args.account,
       redeemScript: args.redeemscript,
       privateKey: args.privatekey,
+      fireblocksVaultId: args.fireblocksvaultid,
       destAddress: args.destaddress,
       bitcoinRpc: args.bitcoinRpc,
       fee: fee || args.fee,

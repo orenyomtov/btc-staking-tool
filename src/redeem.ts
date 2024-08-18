@@ -4,6 +4,7 @@ export const redeem = async ({
   account,
   redeemScript,
   privateKey,
+  fireblocksVaultId,
   destAddress,
   bitcoinRpc = "mempool",
   fee = "avg",
@@ -16,8 +17,8 @@ export const redeem = async ({
     throw new Error("redeemScript should not be empty");
   }
 
-  if (!privateKey) {
-    throw new Error("privateKey should not be empty");
+  if (!(Number(privateKey == undefined) ^ Number(fireblocksVaultId == undefined))) {
+    throw new Error("Must provide either privateKey or fireblocksVaultId");
   }
 
   if (!destAddress) {
@@ -28,6 +29,7 @@ export const redeem = async ({
     account,
     redeemScript,
     privateKey,
+    fireblocksVaultId,
     destAddress,
     bitcoinRpc,
     fee,

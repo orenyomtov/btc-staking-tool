@@ -15,6 +15,7 @@ import * as ecc from "tiny-secp256k1";
 import ECPairFactory from "ecpair";
 import { CoreChainNetworks, FeeSpeedType } from "./constant";
 import { getAddressType } from "./address";
+import { FireblocksSigner } from "@fireblocks/psbt-sdk";
 
 // Initialize the elliptic curve library
 const ECPair = ECPairFactory(ecc);
@@ -50,7 +51,8 @@ export type StakeParams = {
   lockTime: number; // Lock time for the transaction
   validatorAddress: string; // Validator's address
   rewardAddress: string; // Reward address
-  privateKey: string; // Private key
+  privateKey?: string; // Private key
+  fireblocksVaultId?: string; // Fireblocks vault ID
   publicKey?: string; // Public key fro lock script
   type: RedeemScriptType; // Redeem script type
   witness?: boolean; // Whether to use witness
@@ -72,6 +74,7 @@ export const buildStakeTransaction = async ({
   rewardAddress,
   publicKey,
   privateKey,
+  fireblocksVaultId,
   bitcoinNetwork,
   coreNetwork,
   type,
@@ -95,7 +98,14 @@ export const buildStakeTransaction = async ({
 
   const bytesFee = await provider.getFeeRate(fee);
 
-  const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+  const keyPair = privateKey
+    ? ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"))
+    : await FireblocksSigner.create({
+        fireblocksConfig: {},
+        assetId: bitcoinNetwork == "mainnet" ? "BTC" : "BTC_TEST",
+        vaultId: fireblocksVaultId!,
+        addressIndex: 0,
+      });
 
   if (!publicKey) {
     publicKey = keyPair.publicKey.toString("hex");
@@ -284,12 +294,13 @@ export const buildStakeTransaction = async ({
   });
 
   if (addressType.includes("p2tr")) {
+    // @ts-ignore
     const signer = keyPair.tweak(
       bitcoin.crypto.taggedHash("TapTweak", toXOnly(keyPair.publicKey))
     );
-    psbt.signAllInputs(signer);
+    await psbt.signAllInputsAsync(signer);
   } else {
-    psbt.signAllInputs(keyPair);
+    await psbt.signAllInputsAsync(keyPair);
   }
 
   if (
@@ -316,7 +327,8 @@ export const buildStakeTransaction = async ({
 export type RedeemParams = {
   account: string; // Source address
   redeemScript: Buffer | string; // Redeem script
-  privateKey: string; // Private key
+  privateKey?: string; // Private key
+  fireblocksVaultId?: string; // Fireblocks vault ID
   destAddress: string; // Destination address
   bitcoinRpc: string; // Bitcoin RPC endpoint
 } & FeeParams;
@@ -330,6 +342,7 @@ export const buildRedeemTransaction = async ({
   account,
   redeemScript,
   privateKey,
+  fireblocksVaultId,
   destAddress,
   bitcoinRpc,
   fee,
@@ -365,7 +378,14 @@ export const buildRedeemTransaction = async ({
 
   const bytesFee = await provider.getFeeRate(fee);
 
-  const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+  const keyPair = privateKey
+    ? ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"))
+    : await FireblocksSigner.create({
+        fireblocksConfig: {},
+        assetId: network == bitcoin.networks.bitcoin ? "BTC" : "BTC_TEST",
+        vaultId: fireblocksVaultId!,
+        addressIndex: 0,
+      });
 
   //check private key with lock script
   const res = await provider.getUTXOs(account);
@@ -494,9 +514,7 @@ export const buildRedeemTransaction = async ({
     });
   });
 
-  inputs.forEach((input, idx) => {
-    psbt.signInput(idx, keyPair);
-  });
+  await psbt.signAllInputsAsync(keyPair);
 
   if (!psbt.validateSignaturesOfAllInputs(validatorSignature)) {
     throw new Error("signature is invalid");
