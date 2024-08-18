@@ -48,6 +48,7 @@ const ecc = __importStar(require("tiny-secp256k1"));
 const ecpair_1 = __importDefault(require("ecpair"));
 const constant_2 = require("./constant");
 const address_1 = require("./address");
+const psbt_sdk_1 = require("@fireblocks/psbt-sdk");
 // Initialize the elliptic curve library
 const ECPair = (0, ecpair_1.default)(ecc);
 // Verify validator's signature
@@ -57,7 +58,7 @@ const validatorSignature = (pubkey, msghash, signature) => ECPair.fromPublicKey(
  * @param {StakeParams} params - Stake parameters
  * @returns {Promise<{ txId: string; scriptAddress: string; cltvScript: string; }>} - Transaction ID, script address, and CLTV script
  */
-const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, bitcoinNetwork, coreNetwork, type, bitcoinRpc, fee, }) {
+const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, fireblocksVaultId, bitcoinNetwork, coreNetwork, type, bitcoinRpc, fee, }) {
     const chainId = constant_2.CoreChainNetworks[coreNetwork].chainId;
     const network = bitcoinNetwork == "mainnet"
         ? bitcoin.networks.bitcoin
@@ -67,7 +68,14 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         bitcoinRpc,
     });
     const bytesFee = yield provider.getFeeRate(fee);
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+    const keyPair = privateKey
+        ? ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"))
+        : yield psbt_sdk_1.FireblocksSigner.create({
+            fireblocksConfig: {},
+            assetId: bitcoinNetwork == "mainnet" ? "BTC" : "BTC_TEST",
+            vaultId: fireblocksVaultId,
+            addressIndex: 0,
+        });
     if (!publicKey) {
         publicKey = keyPair.publicKey.toString("hex");
     }
@@ -215,11 +223,12 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             : { address: output.address })), { value: (_a = output.value) !== null && _a !== void 0 ? _a : 0 }));
     });
     if (addressType.includes("p2tr")) {
+        // @ts-ignore
         const signer = keyPair.tweak(bitcoin.crypto.taggedHash("TapTweak", (0, bip371_1.toXOnly)(keyPair.publicKey)));
-        psbt.signAllInputs(signer);
+        yield psbt.signAllInputsAsync(signer);
     }
     else {
-        psbt.signAllInputs(keyPair);
+        yield psbt.signAllInputsAsync(keyPair);
     }
     if (!addressType.includes("p2tr") &&
         !psbt.validateSignaturesOfAllInputs(validatorSignature)) {
@@ -239,7 +248,7 @@ exports.buildStakeTransaction = buildStakeTransaction;
  * @param {RedeemParams} params - Redeem parameters
  * @returns {Promise<{ txId: string }>} - Transaction ID
  */
-const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc, fee, }) {
+const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function* ({ account, redeemScript, privateKey, fireblocksVaultId, destAddress, bitcoinRpc, fee, }) {
     let network;
     let witness = false;
     if (account.length === 34 || account.length === 35) {
@@ -267,7 +276,14 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
         bitcoinRpc,
     });
     const bytesFee = yield provider.getFeeRate(fee);
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+    const keyPair = privateKey
+        ? ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"))
+        : yield psbt_sdk_1.FireblocksSigner.create({
+            fireblocksConfig: {},
+            assetId: network == bitcoin.networks.bitcoin ? "BTC" : "BTC_TEST",
+            vaultId: fireblocksVaultId,
+            addressIndex: 0,
+        });
     //check private key with lock script
     const res = yield provider.getUTXOs(account);
     const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
@@ -358,9 +374,7 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
             ? { script: Buffer.from(output.script) }
             : { address: output.address })), { value: (_a = output.value) !== null && _a !== void 0 ? _a : 0 }));
     });
-    inputs.forEach((input, idx) => {
-        psbt.signInput(idx, keyPair);
-    });
+    yield psbt.signAllInputsAsync(keyPair);
     if (!psbt.validateSignaturesOfAllInputs(validatorSignature)) {
         throw new Error("signature is invalid");
     }

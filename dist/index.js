@@ -45,12 +45,13 @@ program
     .command("stake")
     .description("Stake BTC")
     .requiredOption("-acc, --account <account>", "The Bitcon address used to stake.")
-    .requiredOption("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account. Hex format.")
+    .option("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account. Hex format.")
+    .option("-fbv, --fireblocksvaultid <fireblocksVaultId>", "The Fireblocks vault ID to use for signing the transaction, as an alternative to providing a private key.")
     .requiredOption("-amt, --amount <amount>", "Amount of BTC to stake, measured in SAT.")
     .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet, default to 1)Mainnet.")
     .option("-cn, --corenetwork <corenetwork>", "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet.")
     .requiredOption("-lt, --locktime <locktime>", "The unix timestamp in seconds to lock the BTC assets up to. e.g. 1711983981")
-    .option("-pubkey, --publickey <publickey>", "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey.")
+    .option("-pubkey, --publickey <publickey>", "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey or --fireblocksvaultid.")
     .requiredOption("-raddr, --rewardaddress <rewardaddress>", "Core address used to claim staking rewards.")
     .requiredOption("-vaddr, --validatoraddress <validatoraddress>", "Core validator address to stake to.")
     .option("-w, --witness", "Use segwit or not.")
@@ -70,6 +71,7 @@ program
         bitcoinNetwork: bitcoinnetwork,
         coreNetwork: corenetwork,
         privateKey: args.privatekey,
+        fireblocksVaultId: args.fireblocksvaultid,
         witness: args.witness,
         bitcoinRpc: args.bitcoinrpc,
         fee: fee || args.fee,
@@ -80,7 +82,8 @@ program
     .description("Redeem BTC")
     .requiredOption("-acc, --account <account>", "The locked P2SH/P2WSH script address.")
     .requiredOption("-r, --redeemscript <redeemscript>", "The redeem script which was returned in the stake action.")
-    .requiredOption("-privkey, --privatekey <privatekey>", "The private key associated --publickey in the stake action. Hex format.")
+    .option("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account. Hex format.")
+    .option("-fbv, --fireblocksvaultid <fireblocksVaultId>", "The Fireblocks vault ID to use for signing the transaction, as an alternative to providing a private key.")
     .requiredOption("-d, --destaddress <destaddress>", "The Bitcoin address to receive the redeemed BTC assets.")
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
     .option("--fee <fee>", "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
@@ -90,6 +93,7 @@ program
         account: args.account,
         redeemScript: args.redeemscript,
         privateKey: args.privatekey,
+        fireblocksVaultId: args.fireblocksvaultid,
         destAddress: args.destaddress,
         bitcoinRpc: args.bitcoinRpc,
         fee: fee || args.fee,

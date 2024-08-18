@@ -11,15 +11,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.redeem = void 0;
 const transaction_1 = require("./transaction");
-const redeem = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc = "mempool", fee = "avg", }) {
+const redeem = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, redeemScript, privateKey, fireblocksVaultId, destAddress, bitcoinRpc = "mempool", fee = "avg", }) {
     if (!account) {
         throw new Error("account should not be empty");
     }
     if (!redeemScript) {
         throw new Error("redeemScript should not be empty");
     }
-    if (!privateKey) {
-        throw new Error("privateKey should not be empty");
+    if (!(Number(privateKey == undefined) ^ Number(fireblocksVaultId == undefined))) {
+        throw new Error("Must provide either privateKey or fireblocksVaultId");
     }
     if (!destAddress) {
         throw new Error("destAddress should not be empty");
@@ -28,6 +28,7 @@ const redeem = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, red
         account,
         redeemScript,
         privateKey,
+        fireblocksVaultId,
         destAddress,
         bitcoinRpc,
         fee,

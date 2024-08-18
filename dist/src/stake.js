@@ -16,7 +16,7 @@ exports.stake = void 0;
 const constant_1 = require("./constant");
 const transaction_1 = require("./transaction");
 const bignumber_js_1 = __importDefault(require("bignumber.js"));
-const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", }) {
+const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, fireblocksVaultId, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", }) {
     if (!lockTime) {
         throw new Error("LockTime should not be empty");
     }
@@ -26,8 +26,8 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     if (!account) {
         throw new Error("Account should not be empty");
     }
-    if (!privateKey) {
-        throw new Error("privateKey should not be empty");
+    if (!(Number(privateKey == undefined) ^ Number(fireblocksVaultId == undefined))) {
+        throw new Error("Must provide either privateKey or fireblocksVaultId");
     }
     if (!amount) {
         throw new Error("Amount should not be empty");
@@ -48,6 +48,7 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
         type: constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
         publicKey,
         privateKey,
+        fireblocksVaultId,
         bitcoinNetwork,
         coreNetwork,
         bitcoinRpc,
